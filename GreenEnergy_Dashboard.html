@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Green Energy Solutions — Painel de Controle</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --g1: #1B4D22;
+  --g2: #2E7D32;
+  --g3: #43A047;
+  --g4: #81C784;
+  --g5: #C8E6C9;
+  --g6: #F1F8F2;
+  --yellow: #F9A825;
+  --red:    #D32F2F;
+  --blue:   #1565C0;
+  --white:  #FFFFFF;
+  --bg:     #F4F6F4;
+  --card:   #FFFFFF;
+  --text:   #1A2B1C;
+  --soft:   #5A6B5C;
+  --border: #E0EBE0;
+  --shadow: 0 2px 12px rgba(27,77,34,0.08);
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+  background: var(--g1);
+  display: flex; flex-direction: column;
+  z-index: 100; padding: 0;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.logo-mark {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--g3), var(--g4));
+  border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; font-size: 20px; margin-bottom: 10px;
+}
+.logo-name { color: #fff; font-weight: 700; font-size: 14px; line-height: 1.2; }
+.logo-sub  { color: rgba(255,255,255,0.45); font-size: 10px; font-weight: 400; margin-top: 2px; }
+
+.sidebar-nav { padding: 16px 12px; flex: 1; }
+.nav-label {
+  color: rgba(255,255,255,0.3); font-size: 9px; font-weight: 600;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 0 8px; margin-bottom: 8px; margin-top: 16px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 9px;
+  color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; margin-bottom: 2px;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.nav-item.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff; font-weight: 600;
+}
+.nav-item.active .nav-dot { background: var(--g4); }
+.nav-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.25); flex-shrink: 0;
+}
+.nav-icon { font-size: 16px; }
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.3); font-size: 11px;
+}
+
+/* MAIN */
+.main { margin-left: 220px; min-height: 100vh; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0 28px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.topbar-sub   { font-size: 12px; color: var(--soft); margin-top: 1px; }
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 12px; color: var(--soft); font-weight: 500; }
+.filter-select {
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 6px 10px; font-family: 'DM Sans', sans-serif;
+  font-size: 12px; color: var(--text); background: #fff;
+  cursor: pointer; outline: none; transition: border-color 0.2s;
+}
+.filter-select:focus { border-color: var(--g2); }
+
+.badge-live {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--g6); border: 1px solid var(--g5);
+  border-radius: 99px; padding: 4px 12px;
+  font-size: 11px; font-weight: 600; color: var(--g2);
+}
+.badge-live::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--g3); animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+
+/* CONTENT */
+.content { padding: 24px 28px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* KPI ROW */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.kpi-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+  box-shadow: var(--shadow); position: relative; overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(27,77,34,0.12); }
+.kpi-card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+}
+.kpi-card.green::before  { background: linear-gradient(90deg, var(--g2), var(--g4)); }
+.kpi-card.yellow::before { background: linear-gradient(90deg, var(--yellow), #FFD54F); }
+.kpi-card.blue::before   { background: linear-gradient(90deg, var(--blue), #42A5F5); }
+.kpi-card.red::before    { background: linear-gradient(90deg, var(--red), #EF9A9A); }
+
+.kpi-icon { font-size: 22px; margin-bottom: 10px; }
+.kpi-val  { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 4px; }
+.kpi-lbl  { font-size: 12px; color: var(--soft); font-weight: 400; margin-bottom: 8px; }
+.kpi-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 99px;
+}
+.badge-up   { background: #E8F5E9; color: #2E7D32; }
+.badge-down { background: #FFEBEE; color: #C62828; }
+.badge-warn { background: #FFF8E1; color: #F57F17; }
+.badge-ok   { background: #E8F5E9; color: #2E7D32; }
+
+/* CHART GRID */
+.chart-row { display: grid; gap: 16px; margin-bottom: 20px; }
+.chart-row.two   { grid-template-columns: 3fr 2fr; }
+.chart-row.equal { grid-template-columns: 1fr 1fr; }
+.chart-row.full  { grid-template-columns: 1fr; }
+
+.chart-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow);
+}
+.chart-header {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 16px;
+}
+.chart-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.chart-sub   { font-size: 11px; color: var(--soft); margin-top: 2px; }
+.chart-tag {
+  font-size: 10px; font-weight: 600; padding: 3px 10px;
+  border-radius: 99px; background: var(--g6); color: var(--g2);
+  border: 1px solid var(--g5); white-space: nowrap;
+}
+.chart-wrap { position: relative; height: 220px; }
+
+/* ALERT TABLE */
+.alert-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.alert-table th {
+  text-align: left; padding: 8px 12px;
+  background: var(--g6); color: var(--g2);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--g5);
+}
+.alert-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.alert-table tr:last-child td { border-bottom: none; }
+.alert-table tr:hover td { background: var(--g6); }
+.eff-bar-bg { background: #E8F5E9; border-radius: 99px; height: 7px; width: 100%; overflow: hidden; }
+.eff-bar    { height: 100%; border-radius: 99px; }
+
+/* SECTION TITLE */
+.section-title {
+  font-size: 13px; font-weight: 700; color: var(--soft);
+  letter-spacing: 0.5px; text-transform: uppercase;
+  margin-bottom: 14px; margin-top: 4px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* FOOTER NOTE */
+.footer-note {
+  text-align: center; padding: 20px;
+  font-size: 11px; color: var(--soft);
+  border-top: 1px solid var(--border); margin-top: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">🌿</div>
+    <div class="logo-name">Green Energy<br>Solutions</div>
+    <div class="logo-sub">Painel de Controle — 2025</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Dashboards</div>
+    <button class="nav-item active" onclick="showPage('operacional', this)">
+      <span class="nav-icon">⚡</span>
+      <span>Operacional</span>
+      <div class="nav-dot"></div>
+    </button>
+    <button class="nav-item" onclick="showPage('financeiro', this)">
+      <span class="nav-icon">💰</span>
+      <span>Financeiro</span>
+      <div class="nav-dot"></div>
+    </button>
+    <div class="nav-label">Informações</div>
+    <button class="nav-item" onclick="alert('Dados extraídos do arquivo GreenEnergy_Dados.xlsx\nAtualização: mensal\nFonte: Sensores IoT + Relatórios Financeiros')">
+      <span class="nav-icon">📋</span>
+      <span>Sobre os Dados</span>
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    Projeto acadêmico — ASI<br>Alessandro · 2026
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbarTitle">Dashboard Operacional</div>
+      <div class="topbar-sub">Monitoramento de produção e eficiência das usinas</div>
+    </div>
+    <div class="topbar-right">
+      <div class="filter-group">
+        <span class="filter-label">Período:</span>
+        <select class="filter-select" id="filterMes" onchange="updateCharts()">
+          <option value="all">Todos os meses</option>
+          <option value="0">Janeiro</option>
+          <option value="1">Fevereiro</option>
+          <option value="2">Março</option>
+          <option value="3">Abril</option>
+          <option value="4">Maio</option>
+          <option value="5">Junho</option>
+          <option value="6">Julho</option>
+          <option value="7">Agosto</option>
+          <option value="8">Setembro</option>
+          <option value="9">Outubro</option>
+          <option value="10">Novembro</option>
+          <option value="11">Dezembro</option>
+        </select>
+      </div>
+      <div class="badge-live">Dados 2025</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ===== PÁGINA OPERACIONAL ===== -->
+    <div class="page active" id="page-operacional">
+
+      <div class="section-title">Indicadores de Produção</div>
+      <div class="kpi-row">
+        <div class="kpi-card green">
+          <div class="kpi-icon">⚡</div>
+          <div class="kpi-val" id="kpi-producao">57.840</div>
+          <div class="kpi-lbl">Produção Total (MWh)</div>
+          <span class="kpi-badge badge-up">↑ +8,3% vs. 2024</span>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-val" id="kpi-eficiencia">89,4%</div>
+          <div class="kpi-lbl">Eficiência Média</div>
+          <span class="kpi-badge badge-warn">⚠ Meta: 92%</span>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon">🏭</div>
+          <div class="kpi-val">4</div>
+          <div class="kpi-lbl">Unidades Ativas</div>
+          <span class="kpi-badge badge-ok">✓ Todas online</span>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-icon">🔔</div>
+          <div class="kpi-val" id="kpi-alertas">1</div>
+          <div class="kpi-lbl">Alertas Críticos</div>
+          <span class="kpi-badge badge-down">Usina Eólica RS</span>
+        </div>
+      </div>
+
+      <div class="section-title">Análise Temporal</div>
+      <div class="chart-row two">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Produção Mensal: 2025 vs. 2024</div>
+              <div class="chart-sub">Comparativo de geração energética (MWh)</div>
+            </div>
+            <span class="chart-tag">Tendência</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartLinhas"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Produção por Unidade</div>
+              <div class="chart-sub">Comparativo entre usinas (MWh)</div>
+            </div>
+            <span class="chart-tag">Comparativo</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartBarras"></canvas></div>
+        </div>
+      </div>
+
+      <div class="section-title">Status das Usinas</div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Eficiência por Unidade Geradora</div>
+            <div class="chart-sub">Verde = normal · Amarelo = atenção (85–90%) · Vermelho = crítico (&lt;85%)</div>
+          </div>
+        </div>
+        <table class="alert-table">
+          <thead>
+            <tr>
+              <th>Unidade</th>
+              <th>Região</th>
+              <th>Tipo</th>
+              <th>Produção (MWh)</th>
+              <th>Eficiência</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaUsinas"></tbody>
+        </table>
+      </div>
+
+    </div><!-- /page-operacional -->
+
+    <!-- ===== PÁGINA FINANCEIRA ===== -->
+    <div class="page" id="page-financeiro">
+
+      <div class="section-title">Indicadores Financeiros</div>
+      <div class="kpi-row">
+        <div class="kpi-card green">
+          <div class="kpi-icon">💵</div>
+          <div class="kpi-val">R$ 2,7M</div>
+          <div class="kpi-lbl">Receita Total Anual</div>
+          <span class="kpi-badge badge-up">↑ +12% vs. 2024</span>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-icon">📉</div>
+          <div class="kpi-val">R$ 1,3M</div>
+          <div class="kpi-lbl">Custo de Geração</div>
+          <span class="kpi-badge badge-warn">48% da receita</span>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon">📄</div>
+          <div class="kpi-val">405</div>
+          <div class="kpi-lbl">Contratos Ativos</div>
+          <span class="kpi-badge badge-up">↑ +23 este mês</span>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-icon">📊</div>
+          <div class="kpi-val">R$ 1,4M</div>
+          <div class="kpi-lbl">Margem Bruta</div>
+          <span class="kpi-badge badge-ok">52% de margem</span>
+        </div>
+      </div>
+
+      <div class="section-title">Análise de Receita e Custos</div>
+      <div class="chart-row two">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Receita vs. Custo de Geração (R$)</div>
+              <div class="chart-sub">Evolução mensal ao longo de 2025</div>
+            </div>
+            <span class="chart-tag">Área</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartArea"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Receita por Tipo de Contrato</div>
+              <div class="chart-sub">Residencial vs. Comercial por mês</div>
+            </div>
+            <span class="chart-tag">Distribuição</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chartContratos"></canvas></div>
+        </div>
+      </div>
+
+      <div class="section-title">Projeção de Receita</div>
+      <div class="chart-row full">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Projeção para os próximos 3 meses (média móvel)</div>
+              <div class="chart-sub">Estimativa baseada na tendência dos últimos 6 meses</div>
+            </div>
+            <span class="chart-tag">Previsão</span>
+          </div>
+          <div class="chart-wrap" style="height:180px"><canvas id="chartProjecao"></canvas></div>
+        </div>
+      </div>
+
+    </div><!-- /page-financeiro -->
+
+  </div><!-- /content -->
+
+  <div class="footer-note">
+    Green Energy Solutions · Painel de Controle 2025 · Dados: GreenEnergy_Dados.xlsx · Desenvolvido por Alessandro
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DADOS
+// ============================================================
+const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+const producao2025 = [4482, 4614, 4521, 4368, 4296, 4188, 4323, 4425, 4521, 4617, 4719, 4566];
+const producao2024 = [4128, 4248, 4092, 3972, 3876, 3744, 3948, 4068, 4176, 4320, 4368, 4116];
+
+const usinas = [
+  { nome:'Usina Solar Curitiba',     regiao:'Sul',     tipo:'Solar',  prod:14652, cap:15600, eff:93.9 },
+  { nome:'Usina Solar São Paulo',    regiao:'Sudeste', tipo:'Solar',  prod:17064, cap:18000, eff:94.8 },
+  { nome:'Usina Eólica Rio Grande',  regiao:'Sul',     tipo:'Eólica', prod:17616, cap:20400, eff:86.4 },
+  { nome:'Usina Solar Rio de Janeiro',regiao:'Sudeste',tipo:'Solar',  prod:15504, cap:16800, eff:92.3 },
+];
+
+const receitaMensal  = [85000,87020,88960,90180,91500,93200,94800,96500,98200,99800,101400,103100].map(v=>v+140000);
+const custoMensal    = [42000,42900,43500,44100,44800,45400,46000,46600,47200,47800,48400,49000].map(v=>v+68000);
+const residencial    = [85000,86000,87200,88500,89800,91000,92200,93500,94800,96100,97400,98700];
+const comercial      = [140000,141800,143500,145200,147000,148800,150600,152400,154200,156000,157800,159600];
+
+// ============================================================
+// CHART DEFAULTS
+// ============================================================
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.color = '#5A6B5C';
+
+const GREEN = '#2E7D32', GREEN_L = 'rgba(67,160,71,0.15)';
+const BLUE  = '#1565C0', BLUE_L  = 'rgba(21,101,192,0.12)';
+const RED   = '#C62828', RED_L   = 'rgba(198,40,40,0.12)';
+
+// ============================================================
+// GRÁFICO 1 — LINHAS
+// ============================================================
+const ctxL = document.getElementById('chartLinhas').getContext('2d');
+const chartLinhas = new Chart(ctxL, {
+  type: 'line',
+  data: {
+    labels: meses,
+    datasets: [
+      { label:'2025', data: producao2025, borderColor: GREEN,
+        backgroundColor: GREEN_L, fill: true,
+        tension: 0.4, pointRadius: 4, pointBackgroundColor: GREEN, borderWidth: 2.5 },
+      { label:'2024', data: producao2024, borderColor: '#81C784',
+        backgroundColor: 'transparent', fill: false,
+        tension: 0.4, pointRadius: 3, borderDash: [5,4], borderWidth: 1.8,
+        pointBackgroundColor: '#81C784' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } },
+               tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.raw.toLocaleString('pt-BR')} MWh` } } },
+    scales: {
+      x: { grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:11 } } },
+      y: { grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:11 },
+           callback: v => v.toLocaleString('pt-BR') + ' MWh' } }
+    }
+  }
+});
+
+// ============================================================
+// GRÁFICO 2 — BARRAS HORIZONTAIS
+// ============================================================
+const ctxB = document.getElementById('chartBarras').getContext('2d');
+const chartBarras = new Chart(ctxB, {
+  type: 'bar',
+  data: {
+    labels: ['Solar\nCuritiba','Solar\nSão Paulo','Eólica\nRS','Solar\nRJ'],
+    datasets: [{
+      label:'Produção 2025 (MWh)',
+      data: usinas.map(u=>u.prod),
+      backgroundColor: usinas.map(u=>u.eff<85?RED:u.eff<90?'#F9A825':GREEN),
+      borderRadius: 6, borderSkipped: false
+    }]
+  },
+  options: {
+    indexAxis:'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{ display:false },
+               tooltip:{ callbacks:{ label: c=>` ${c.raw.toLocaleString('pt-BR')} MWh` } } },
+    scales: {
+      x: { grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:11 } } },
+      y: { grid:{ display:false }, ticks:{ font:{ size:11 } } }
+    }
+  }
+});
+
+// ============================================================
+// TABELA USINAS
+// ============================================================
+function renderTabela(filtroMes) {
+  const tbody = document.getElementById('tabelaUsinas');
+  tbody.innerHTML = '';
+  usinas.forEach(u => {
+    const cor   = u.eff < 85 ? RED   : u.eff < 90 ? '#F9A825' : GREEN;
+    const label = u.eff < 85 ? '🔴 Crítico' : u.eff < 90 ? '🟡 Atenção' : '🟢 Normal';
+    const pct   = u.eff;
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-weight:600">${u.nome}</td>
+        <td>${u.regiao}</td>
+        <td>${u.tipo}</td>
+        <td style="font-family:'DM Mono',monospace">${u.prod.toLocaleString('pt-BR')}</td>
+        <td style="min-width:140px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="eff-bar-bg" style="flex:1">
+              <div class="eff-bar" style="width:${pct}%;background:${cor}"></div>
+            </div>
+            <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${cor}">${pct}%</span>
+          </div>
+        </td>
+        <td><span style="font-size:12px;font-weight:600;color:${cor}">${label}</span></td>
+      </tr>`;
+  });
+}
+renderTabela();
+
+// ============================================================
+// GRÁFICO 3 — ÁREA (financeiro)
+// ============================================================
+const ctxA = document.getElementById('chartArea').getContext('2d');
+const chartArea = new Chart(ctxA, {
+  type: 'line',
+  data: {
+    labels: meses,
+    datasets: [
+      { label:'Receita (R$)', data: receitaMensal,
+        borderColor: GREEN, backgroundColor:'rgba(46,125,50,0.15)',
+        fill:true, tension:0.4, pointRadius:3, borderWidth:2 },
+      { label:'Custo de Geração (R$)', data: custoMensal,
+        borderColor: RED, backgroundColor:'rgba(198,40,40,0.08)',
+        fill:true, tension:0.4, pointRadius:3, borderWidth:1.8, borderDash:[4,3] }
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } },
+              tooltip:{ callbacks:{ label: c=>`${c.dataset.label}: R$ ${c.raw.toLocaleString('pt-BR')}` } } },
+    scales:{
+      x:{ grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:11 } } },
+      y:{ grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:11 },
+          callback: v=>'R$ '+v.toLocaleString('pt-BR') } }
+    }
+  }
+});
+
+// ============================================================
+// GRÁFICO 4 — BARRAS EMPILHADAS (contratos)
+// ============================================================
+const ctxC = document.getElementById('chartContratos').getContext('2d');
+const chartContratos = new Chart(ctxC, {
+  type:'bar',
+  data:{
+    labels: meses,
+    datasets:[
+      { label:'Residencial', data: residencial, backgroundColor:'rgba(46,125,50,0.75)', borderRadius:4 },
+      { label:'Comercial',   data: comercial,   backgroundColor:'rgba(21,101,192,0.7)', borderRadius:4 }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } },
+              tooltip:{ callbacks:{ label: c=>`${c.dataset.label}: R$ ${c.raw.toLocaleString('pt-BR')}` } } },
+    scales:{
+      x:{ stacked:true, grid:{ display:false }, ticks:{ font:{ size:11 } } },
+      y:{ stacked:true, grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:11 },
+          callback: v=>'R$ '+(v/1000).toFixed(0)+'k' } }
+    }
+  }
+});
+
+// ============================================================
+// GRÁFICO 5 — PROJEÇÃO (linha + pontos futuros)
+// ============================================================
+const ctxP = document.getElementById('chartProjecao').getContext('2d');
+const mesesProj = [...meses, 'Jan/26','Fev/26','Mar/26'];
+const receitaHistorica = [...receitaMensal, null, null, null];
+const mmov = v => Math.round(receitaMensal.slice(-3).reduce((a,b)=>a+b,0)/3 * v);
+const receitaProjetada = [...Array(12).fill(null), mmov(1.03), mmov(1.055), mmov(1.08)];
+const chartProjecao = new Chart(ctxP, {
+  type:'line',
+  data:{
+    labels: mesesProj,
+    datasets:[
+      { label:'Receita Real (R$)', data: receitaHistorica,
+        borderColor: GREEN, backgroundColor: GREEN_L, fill:true,
+        tension:0.4, pointRadius:3, borderWidth:2 },
+      { label:'Projeção (R$)', data: receitaProjetada,
+        borderColor:'#F9A825', backgroundColor:'rgba(249,168,37,0.1)', fill:true,
+        tension:0.4, pointRadius:5, borderWidth:2, borderDash:[6,4],
+        pointBackgroundColor:'#F9A825', pointBorderColor:'#fff', pointBorderWidth:2 }
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } },
+              tooltip:{ callbacks:{ label: c=>c.raw?`${c.dataset.label}: R$ ${c.raw.toLocaleString('pt-BR')}`:'—' } } },
+    scales:{
+      x:{ grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:10 } } },
+      y:{ grid:{ color:'#F0F0F0' }, ticks:{ font:{ size:11 },
+          callback: v=>'R$ '+(v/1000).toFixed(0)+'k' } }
+    }
+  }
+});
+
+// ============================================================
+// NAVEGAÇÃO E FILTROS
+// ============================================================
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  const titles = {
+    operacional: ['Dashboard Operacional','Monitoramento de produção e eficiência das usinas'],
+    financeiro:  ['Dashboard Financeiro','Análise de receita, custos e contratos'],
+  };
+  document.querySelector('.topbar-title').textContent = titles[id][0];
+  document.querySelector('.topbar-sub').textContent   = titles[id][1];
+}
+
+function updateCharts() {
+  const v = document.getElementById('filterMes').value;
+  if(v === 'all') {
+    chartLinhas.data.datasets[0].data = producao2025;
+    chartLinhas.data.datasets[1].data = producao2024;
+    document.getElementById('kpi-producao').textContent   = '57.840';
+    document.getElementById('kpi-eficiencia').textContent = '89,4%';
+    document.getElementById('kpi-alertas').textContent    = '1';
+  } else {
+    const i = parseInt(v);
+    chartLinhas.data.datasets[0].data = producao2025.map((d,j)=>j===i?d:null);
+    chartLinhas.data.datasets[1].data = producao2024.map((d,j)=>j===i?d:null);
+    document.getElementById('kpi-producao').textContent   = producao2025[i].toLocaleString('pt-BR');
+    const eff = (producao2025[i] / (590000/12) * 100).toFixed(1);
+    document.getElementById('kpi-eficiencia').textContent = eff + '%';
+    document.getElementById('kpi-alertas').textContent    = eff < 88 ? '2' : '1';
+  }
+  chartLinhas.update();
+}
+</script>
+</body>
+</html>
